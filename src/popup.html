@@ -1,0 +1,126 @@
+<!-- popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ducky Wallet</title>
+  <header>
+    <!-- The network display will be inserted here -->
+    <div class="connection-status">
+      <span class="connection-indicator"></span>
+      <span class="connection-text">Disconnected</span>
+    </div>
+  </header>
+  <!-- Include Font Awesome Icons without integrity attribute -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <!-- Include styles.css -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Network Selection Icon and Dropdown -->
+    <div id="network-selector-container">
+      <button id="network-selector-button" aria-label="Select Network">
+        <i class="fas fa-network-wired fa-lg"></i>
+      </button>
+      <div id="network-dropdown" class="dropdown hidden">
+        <label for="network-select">Select Network:</label>
+        <select id="network-select"></select>
+        <button id="add-network-button" class="secondary-button">Add Custom Network</button>
+      </div>
+    </div>
+
+    <!-- Settings Icon (Hidden by Default) -->
+    <button id="settings-icon-button" class="hidden" aria-label="Settings">
+      <i id="settings-icon" class="fas fa-cog fa-lg"></i>
+    </button>
+
+    <h1>
+      <div id="model-container" style="width: 200px; height: 200px;"></div>
+    </h1>
+
+    <!-- Main Content -->
+    <div id="main-content" class="section">
+      <!-- Wallet Section -->
+      <div id="wallet-section" class="section">
+        <!-- This will be populated dynamically -->
+      </div>
+
+      <!-- Account Information -->
+      <div id="accounts-section" class="hidden"></div>
+
+      <!-- Send Funds Section -->
+      <div id="send-section" class="hidden">
+        <form id="send-form">
+          <input type="text" id="to-address" placeholder="Recipient Address" required>
+          <input type="number" id="amount" placeholder="Amount in ETH" step="any" required>
+          <button type="submit" id="send-button">Send ETH</button>
+        </form>
+      </div>
+
+      <!-- Tokens Section -->
+      <div id="tokens-section" class="hidden">
+        <h2>Your Tokens</h2>
+        <ul id="tokens-list"></ul>
+      </div>
+
+      <!-- Connection Request Section -->
+      <div id="connection-request-section" class="section hidden">
+        <div class="connection-request-container">
+          <h3>Connection Request</h3>
+          <p>Website requesting connection:</p>
+          <div id="requesting-origin" class="origin-display"></div>
+          <p>This site is requesting access to view your:</p>
+          <ul class="permissions-list">
+            <li>Account address</li>
+            <li>Network information</li>
+          </ul>
+          <div class="connection-buttons">
+            <button id="reject-connection" class="secondary-button">Reject</button>
+            <button id="approve-connection" class="primary-button">Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Custom Network Section (Hidden by Default) -->
+    <div id="add-network-section" class="section hidden">
+      <h2>Add Custom Network</h2>
+      <form id="add-network-form">
+        <label for="network-name">Network Name:</label>
+        <input type="text" id="network-name" placeholder="e.g., Custom Network" required>
+
+        <label for="rpc-url">RPC URL:</label>
+        <input type="text" id="rpc-url" placeholder="e.g., https://custom-rpc.com" required>
+
+        <label for="chain-id">Chain ID:</label>
+        <input type="number" id="chain-id" placeholder="e.g., 1337" required>
+
+        <label for="explorer-url">Block Explorer URL:</label>
+        <input type="url" id="explorer-url" placeholder="e.g., https://custom-explorer.com" required>
+
+        <button type="submit" class="danger-button">Add Network</button>
+        <button type="button" id="back-to-dropdown-button" class="secondary-button">Back</button>
+      </form>
+    </div>
+
+    <!-- Settings Section (Hidden by Default) -->
+    <div id="settings-section" class="section hidden">
+      <h2>Settings</h2>
+      <button id="export-seed-phrase-button" class="danger-button">Export Private Key</button>
+      <!-- Add more settings options here as needed -->
+      <button id="back-to-main-button" class="secondary-button">Back</button>
+
+      <!-- Export Seed Phrase Section -->
+      <div id="export-section" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Load Your Popup Script -->
+  <script src="popup.js"></script>
+</body>
+</html>
