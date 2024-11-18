@@ -16,8 +16,61 @@
     isConnected: () => !!window.ethereum.selectedAddress,
     selectedAddress: null,
     chainId: null,
+    networkVersion: null,
+    isMetaMask: true,
     _connected: false,
     _listeners: {},
+
+    enable: async function() {
+        console.log('Legacy enable() method called');
+        return this.request({ method: 'eth_requestAccounts' });
+    },
+
+    send: function(payload, callback) {
+        if (callback) {
+            this.sendAsync(payload, callback);
+            return;
+        }
+        let result;
+        switch(payload.method) {
+            case 'eth_accounts':
+                result = this.selectedAddress ? [this.selectedAddress] : [];
+                break;
+            case 'eth_coinbase':
+                result = this.selectedAddress || null;
+                break;
+            case 'eth_uninstallFilter':
+                result = true;
+                break;
+            case 'net_version':
+                result = this.networkVersion;
+                break;
+            default:
+                throw new Error('Method not supported');
+        }
+        return {
+            id: payload.id,
+            jsonrpc: '2.0',
+            result
+        };
+    },
+
+    sendAsync: function(payload, callback) {
+        if (Array.isArray(payload)) {
+            Promise.all(payload.map(p => this.request(p)))
+                .then(results => callback(null, results))
+                .catch(error => callback(error, null));
+            return;
+        }
+
+        this.request(payload)
+            .then(result => callback(null, {
+                id: payload.id,
+                jsonrpc: '2.0',
+                result
+            }))
+            .catch(error => callback(error, null));
+    },
 
     request: async (args) => {
       return new Promise((resolve, reject) => {
@@ -42,6 +95,9 @@
                   window.ethereum._emitEvent('connect', { chainId: window.ethereum.chainId });
                   window.ethereum._emitEvent('accountsChanged', [event.data.result[0]]);
                 }, 0);
+              } else if (args.method === 'eth_chainId') {
+                window.ethereum.chainId = event.data.result;
+                window.ethereum.networkVersion = parseInt(event.data.result, 16).toString();
               }
               resolve(event.data.result);
             }
@@ -113,6 +169,10 @@
       });
     }
   };
+
+  // Initialize chainId and networkVersion
+  window.ethereum.chainId = '0x1';  // Mainnet by default
+  window.ethereum.networkVersion = '1';  // Mainnet by default
 
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
