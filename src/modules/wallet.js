@@ -1095,25 +1095,18 @@ export function displayWalletSetup() {
     const data = await chrome.storage.local.get(['pendingConnection', 'pendingOrigin']);
     
     if (data.pendingConnection) {
-      // Get current account
       const wallet = getWallet();
       if (!wallet) return;
 
-      // Clear pending state
-      await chrome.storage.local.remove(['pendingConnection', 'pendingOrigin']);
-
-      // Send response back through content script
-      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          type: 'ETH_RESPONSE',
-          result: [wallet.address],
-          origin: data.pendingOrigin
-        });
+      // Send approval to background script
+      await chrome.runtime.sendMessage({
+        type: 'CONNECTION_APPROVED',
+        address: wallet.address,
+        origin: data.pendingOrigin
       });
 
-      // Update UI
-      displayAccountInfo();
-      window.close(); // Close the popup after approval
+      // Close popup
+      window.close();
     }
   }
 
@@ -1153,21 +1146,7 @@ export function displayWalletSetup() {
           const rejectButton = document.getElementById('reject-connection');
 
           if (approveButton) {
-            approveButton.onclick = async () => {
-              const wallet = getWallet();
-              if (!wallet) return;
-
-              try {
-                await chrome.runtime.sendMessage({
-                  type: 'CONNECTION_APPROVED',
-                  origin: data.pendingOrigin,
-                  address: wallet.address
-                });
-              } catch (error) {
-                console.error('Error approving connection:', error);
-              }
-              window.close();
-            };
+            approveButton.onclick = approveConnection;
           }
 
           if (rejectButton) {
@@ -1182,3 +1161,32 @@ export function displayWalletSetup() {
       }
     }, 100); // Small delay to ensure DOM is ready
   }
+
+  export async function approveConnection() {
+    try {
+        const wallet = getWallet();
+        if (!wallet) throw new Error('Wallet not available');
+
+        const data = await chrome.storage.local.get(['pendingOrigin']);
+        if (!data.pendingOrigin) throw new Error('No pending connection');
+
+        const network = await getCurrentNetwork();
+        
+        // Send approval to background script AND wait for confirmation
+        await chrome.runtime.sendMessage({
+            type: 'CONNECTION_APPROVED',
+            origin: data.pendingOrigin,
+            address: wallet.address.toLowerCase(),
+            chainId: network?.chainId || 1
+        });
+
+        // Clear pending state
+        await chrome.storage.local.remove(['pendingConnection', 'pendingOrigin']);
+
+        // Close popup
+        window.close();
+    } catch (error) {
+        console.error('Error approving connection:', error);
+        throw error;
+    }
+}

@@ -143,48 +143,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   else if (request.type === 'CONNECTION_APPROVED') {
-    console.log('Processing connection approval for:', request.origin);
-    
-    // Store the connection
-    activeConnections.set(request.origin, {
-      address: request.address,
-      timestamp: Date.now()
-    });
-
-    // Get the pending connection details
     chrome.storage.local.get(['pendingConnection'], (data) => {
       if (data.pendingConnection) {
-        // Check if tab still exists
-        chrome.tabs.get(data.pendingConnection.tabId, (tab) => {
-          if (chrome.runtime.lastError) {
-            console.error('Tab no longer exists:', chrome.runtime.lastError);
-            return;
-          }
-
-          // Send messages only if tab exists
-          chrome.tabs.sendMessage(data.pendingConnection.tabId, {
-            type: 'ETH_RESPONSE',
-            result: [request.address],
-            id: data.pendingConnection.requestId
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('Send message error:', chrome.runtime.lastError);
-            }
-          });
-
-          chrome.tabs.sendMessage(data.pendingConnection.tabId, {
-            type: 'CONNECTION_CHANGED',
-            connected: true,
-            address: request.address,
-            origin: request.origin
-          });
-
-          // Clear pending connection
-          chrome.storage.local.remove('pendingConnection');
+        // Send response to content script
+        chrome.tabs.sendMessage(data.pendingConnection.tabId, {
+          type: 'ETH_RESPONSE',
+          id: data.pendingConnection.requestId,
+          result: [request.address]
         });
+        
+        // Also send connection status
+        chrome.tabs.sendMessage(data.pendingConnection.tabId, {
+          type: 'CONNECTION_CHANGED',
+          connected: true,
+          address: request.address
+        });
+        
+        // Clear pending connection
+        chrome.storage.local.remove('pendingConnection');
       }
     });
-
+    
     sendResponse({ success: true });
     return true;
   }
